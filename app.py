@@ -1,110 +1,113 @@
-import streamlit as st
-import tensorflow as tf
-import numpy as np
-from PIL import Image
-import base64
+st.markdown(f"""
+<style>
 
-# ================================
-# BACKGROUND BATIK BASE64 EMBEDDED
-# ================================
-
-BATIK_BASE64 = """
-iVBORw0KGgoAAAANSUhEUgAAA... <=== AKU ISI BASE64 NYA NANTI
-"""
-
-def set_bg_from_base64():
-    css = f"""
-    <style>
+    /* WRAPPER UTAMA STREAMLIT */
     .stApp {{
         background: 
-            linear-gradient(rgba(0,0,0,0.88), rgba(0,0,0,0.9)),
-            url("data:image/png;base64,{BATIK_BASE64}");
-        background-size: 140px;
-        background-repeat: repeat;
+            linear-gradient(rgba(0,0,0,0.80), rgba(0,0,0,0.85)),
+            url("data:image/png;base64,{batik_base64}");
+        background-size: 180px;
         background-attachment: fixed;
+        background-repeat: repeat;
         color: #eee !important;
+        font-family: 'Segoe UI', sans-serif;
+        padding: 0;
+        margin: 0;
     }}
-    </style>
-    """
-    st.markdown(css, unsafe_allow_html=True)
 
+    /* CONTAINER KONTEN */
+    .block-container {{
+        padding-top: 1rem;
+        padding-bottom: 3rem;
+        background: rgba(15, 11, 25, 0.55);
+        border-radius: 20px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.45);
+        backdrop-filter: blur(6px);
+    }}
 
-set_bg_from_base64()
+    /* HEADER CARD */
+    .hero {{
+        background: linear-gradient(135deg, #2a1f49cc, #0e0b1688);
+        padding: 40px 30px;
+        border-radius: 20px;
+        text-align: center;
+        color: white;
+        margin-bottom: 35px;
+        border: 2px solid rgba(255,255,255,0.07);
+    }}
 
+    .title {{
+        font-size: 3rem;
+        font-weight: 900;
+        margin-bottom: -5px;
+    }}
 
+    .subtitle {{
+        opacity: 0.9;
+        font-size: 1.2rem;
+    }}
 
-# ============ UI HEADER ============
-st.markdown("""
-<div style="text-align:center; padding:35px; 
-background:rgba(255,255,255,0.06);
-border-radius:18px; border:1px solid rgba(255,255,255,0.15);
-backdrop-filter:blur(7px);
-box-shadow:0 0 25px rgba(0,0,0,0.5);">
-    <h1 style="color:#d8caff;font-weight:900;margin-bottom:5px;">
-        🔮 Klasifikasi Tokoh Wayang
-    </h1>
-    <p style="color:#cdbaff;">Tema Gelap • Batik • Modern UI</p>
-</div>
-<br>
+    /* CARD UMUM */
+    .card {{
+        background: rgba(255,255,255,0.08);
+        padding: 22px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #ddd;
+        backdrop-filter: blur(8px);
+    }}
+
+    /* UPLOADER BOX (versi baru Streamlit) */
+    [data-testid="stFileUploader"] {{
+        background: rgba(255,255,255,0.07);
+        padding: 15px;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.12);
+        color: #ddd;
+    }}
+
+    /* IMAGE FRAME */
+    .img-frame {{
+        padding: 10px;
+        border: 4px solid #7d5cd1;
+        border-radius: 15px;
+        background: rgba(255,255,255,0.05);
+    }}
+
+    /* MODERN BUTTON */
+    .stButton > button {{
+        background: linear-gradient(135deg, #8a4de8, #4d2c7a);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 1.05rem;
+        transition: 0.2s;
+        box-shadow: 0 0 15px rgba(138,77,232,0.4);
+    }}
+
+    .stButton > button:hover {{
+        background: linear-gradient(135deg, #6d37c5, #341f59);
+        transform: scale(1.03);
+        box-shadow: 0 0 25px rgba(138,77,232,0.7);
+    }}
+
+    /* JUDUL HASIL */
+    .result-title {{
+        font-size: 1.7rem;
+        font-weight: 800;
+        color: #d8caff;
+        padding-top: 10px;
+        animation: fadeIn 1s ease;
+    }}
+
+    /* ANIMASI */
+    @keyframes fadeIn {{
+        from {{ opacity: 0; transform: translateY(10px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+
+</style>
 """, unsafe_allow_html=True)
-
-
-# =============================
-# LOAD MODEL
-# =============================
-try:
-    model = tf.keras.models.load_model("wayang_mobilenetv2.h5")
-    MODEL_READY = True
-except:
-    MODEL_READY = False
-    st.error("❌ Model gagal dibuka — file rusak atau tidak ditemukan.")
-
-
-# =============================
-# CLASS LIST
-# =============================
-class_names = [
-    "arjuna","bagong","bathara surya","bathara wisnu",
-    "gareng","nakula","petruk","sadewa","semar",
-    "werkudara","yudistira"
-]
-
-# DESKRIPSI TOKOH
-wayang_info = {
-    "semar":"Semar adalah punakawan tertua dan paling bijaksana.",
-    "bagong":"Bagong adalah tokoh lucu dan simbol suara rakyat.",
-    "gareng":"Gareng penuh kehati-hatian, lambang moral baik.",
-    "petruk":"Petruk tinggi kurus, simbol keluwesan dan kecerdikan.",
-    "arjuna":"Arjuna adalah ksatria tampan, pemanah terbaik.",
-    "nakula":"Nakula adalah kembar Pandawa, tampan dan setia.",
-    "sadewa":"Sadewa bijaksana, mewakili pengetahuan mendalam.",
-    "yudistira":"Yudistira adalah pemimpin Pandawa, adil dan jujur.",
-    "werkudara":"Bima kuat, berani, teguh pendirian.",
-    "bathara surya":"Dewa matahari dalam pewayangan.",
-    "bathara wisnu":"Dewa pemelihara alam semesta."
-}
-
-# =============================
-# UPLOAD SECTION
-# =============================
-st.subheader("📤 Upload gambar tokoh wayang")
-
-uploaded = st.file_uploader("Unggah file gambar", type=["jpg","jpeg","png"])
-
-if uploaded:
-    img = Image.open(uploaded).convert("RGB")
-    st.image(img, use_container_width=True)
-
-    if MODEL_READY and st.button("🔍 Analisis Gambar"):
-        
-        resized = img.resize((224,224))
-        arr = np.expand_dims(np.array(resized) / 255.0, 0)
-        
-        pred = model.predict(arr)
-        idx = np.argmax(pred)
-        label = class_names[idx]
-
-        st.success(f"✨ Prediksi: **{label.title()}**")
-
-        st.write("📜 Deskripsi:")
-        st.write(wayang_info.get(label, "Tidak ada deskripsi."))
