@@ -4,207 +4,152 @@ import numpy as np
 from PIL import Image
 import base64
 
-# ================================
-#  FUNGSI LOAD BACKGROUND BATIK
-# ================================
-def load_base64_img(path):
+# =================================================================
+# PAGE SETTINGS
+# =================================================================
+st.set_page_config(
+    page_title="Klasifikasi Tokoh Wayang",
+    page_icon="🎭",
+    layout="wide"
+)
+
+# =================================================================
+# LOAD IMAGE AS BASE64 (LOCAL FILE)
+# =================================================================
+def load_base64(path):
     with open(path, "rb") as img:
         return base64.b64encode(img.read()).decode()
 
-batik_base64 = load_base64_img("batik.png")
+batik_base64 = load_base64("batik.png")
 
-# ================================
-#  CUSTOM DARK THEME + BATIK CSS
-# ================================
-st.markdown(f"""
+# =================================================================
+# CUSTOM DARK THEME + BATIK BACKGROUND
+# =================================================================
+custom_css = f"""
 <style>
 
-    /* WRAPPER UTAMA STREAMLIT */
-    .stApp {{
-        background: 
-            linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.88)),
-            url("data:image/png;base64,{batik_base64}");
-        background-size: 140px;
-        background-attachment: fixed;
-        background-repeat: repeat;
-        color: #eee !important;
-        font-family: 'Segoe UI', sans-serif;
-        padding: 0;
-        margin: 0;
-    }}
+html, body, [class*="css"] {{
+    background: linear-gradient(135deg, #0f0f17 0%, #1d1b27 50%, #2b2a3a 100%) !important;
+    color: #f5f5f5 !important;
+}}
 
-    /* CONTAINER KONTEN */
-    .block-container {{
-        padding-top: 1rem;
-        padding-bottom: 3rem;
-        background: rgba(20, 15, 30, 0.55);
-        border-radius: 20px;
-        box-shadow: 0 0 30px rgba(0,0,0,0.55);
-        backdrop-filter: blur(6px);
-    }}
+.main {{
+    background-image: url("data:image/png;base64,{batik_base64}");
+    background-size: 600px;
+    background-repeat: repeat;
+    padding: 30px;
+    border-radius: 12px;
+}}
 
-    /* HEADER CUSTOM */
-    .hero {{
-        background: linear-gradient(135deg, #2a1f49cc, #0e0b1688);
-        padding: 40px 30px;
-        border-radius: 20px;
-        text-align: center;
-        color: white;
-        margin-bottom: 35px;
-        border: 2px solid rgba(255,255,255,0.07);
-    }}
+h1, h2, h3 {{
+    text-align: center;
+    font-weight: 800;
+    color: #fefefe !important;
+    text-shadow: 0px 0px 8px #000;
+}}
 
-    .title {{
-        font-size: 3rem;
-        font-weight: 900;
-        margin-bottom: -5px;
-    }}
+.upload-section {{
+    background: rgba(255,255,255,0.06);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(6px);
+}}
 
-    .subtitle {{
-        opacity: 0.9;
-        font-size: 1.2rem;
-        margin-top: 5px;
-    }}
+.result-box {{
+    background: rgba(255,255,255,0.08);
+    padding: 25px;
+    border-radius: 12px;
+    margin-top: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+}}
 
-    /* CARD STYLE */
-    .card {{
-        background: rgba(255,255,255,0.07);
-        padding: 22px;
-        border-radius: 15px;
-        border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 4px 25px rgba(0,0,0,0.45);
-        backdrop-filter: blur(8px);
-        margin: 15px 0;
-        color: #ddd;
-    }}
+.button-analyze {{
+    width: 100%;
+    background: #6c4dd9;
+    color: white !important;
+    border-radius: 10px;
+    font-size: 18px;
+    padding: 12px;
+}}
 
-    /* UPLOADER DARK MODE */
-    [data-testid="stFileUploader"] {{
-        background: rgba(255,255,255,0.08);
-        padding: 15px;
-        border-radius: 15px;
-        border: 1px solid rgba(255,255,255,0.15);
-        color: #ddd;
-    }}
+.button-analyze:hover {{
+    background: #8a6aff;
+    color: white !important;
+}}
 
-    /* IMAGE FRAME */
-    .img-frame {{
-        padding: 10px;
-        border: 4px solid #7d5cd1;
-        border-radius: 15px;
-        background: rgba(255,255,255,0.05);
-        width: 100%;
-        text-align: center;
-    }}
-
-    /* MODERN BUTTON */
-    .stButton > button {{
-        background: linear-gradient(135deg, #8a4de8, #4d2c7a);
-        color: white;
-        border: none;
-        padding: 12px 25px;
-        border-radius: 12px;
-        font-weight: bold;
-        font-size: 1.1rem;
-        transition: 0.2s;
-        box-shadow: 0 0 15px rgba(138,77,232,0.4);
-    }}
-
-    .stButton > button:hover {{
-        background: linear-gradient(135deg, #6d37c5, #341f59);
-        transform: scale(1.03);
-        box-shadow: 0 0 25px rgba(138,77,232,0.7);
-    }}
-
-    /* HASIL PREDIKSI */
-    .result-title {{
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #d8caff;
-        padding-top: 10px;
-        text-align: center;
-        animation: fadeIn 1s ease;
-    }}
-
-    /* ANIMASI */
-    @keyframes fadeIn {{
-        from {{ opacity: 0; transform: translateY(10px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
-    }}
+img {{
+    border-radius: 12px;
+}}
 
 </style>
-""", unsafe_allow_html=True)
+"""
 
-# ============================================
-#  LOAD MODEL
-# ============================================
-model = tf.keras.models.load_model("wayang_mobilenetv2.h5")
+st.markdown(custom_css, unsafe_allow_html=True)
 
-class_names = [
-    "arjuna", "bagong", "bathara surya", "bathara wisnu",
-    "gareng", "nakula", "petruk", "sadewa", "semar",
-    "werkudara", "yudistira"
-]
+# =================================================================
+# LOAD MODEL
+# =================================================================
+MODEL_PATH = "wayang_mobilenetv2.h5"
+model = tf.keras.models.load_model(MODEL_PATH)
 
-# ============================================
-#  DATABASE DESKRIPSI WAYANG
-# ============================================
-wayang_info = {
-    "semar": "Semar adalah tokoh punakawan tertua, lambang kebijaksanaan, kesabaran, dan pengayom manusia.",
-    "bagong": "Bagong adalah anak Semar yang jenaka, humoris, dan menjadi simbol suara rakyat.",
-    "gareng": "Gareng adalah punakawan yang melambangkan kehati-hatian dan moral lurus.",
-    "petruk": "Petruk adalah punakawan tinggi kurus, simbol keluwesan dan kecerdikan.",
-    "arjuna": "Arjuna adalah ksatria tampan, ahli panah, tokoh Pandawa yang penuh kebijaksanaan.",
-    "nakula": "Nakula adalah salah satu kembar Pandawa, lambang ketampanan dan kesetiaan.",
-    "sadewa": "Sadewa adalah kembaran Nakula, dikenal bijaksana dan sangat setia.",
-    "yudistira": "Yudistira adalah raja bijaksana, sulung Pandawa, dikenal jujur dan adil.",
-    "werkudara": "Werkudara/Bima adalah Pandawa terkuat, simbol keberanian & ketegasan.",
-    "bathara surya": "Bathara Surya adalah dewa matahari dalam mitologi Jawa.",
-    "bathara wisnu": "Bathara Wisnu adalah dewa pemelihara alam semesta."
+labels = ["arjuna", "bima", "gatotkaca", "nakula", "sadewa", "semar", "werkudara", "yudistira"]
+
+# Deskripsi Wayang
+deskripsi = {
+    "semar": "Semar adalah punakawan tertua, bijaksana, dan pelindung Pandawa dalam pewayangan Jawa.",
+    "arjuna": "Arjuna adalah ksatria tampan, ahli panah, dan tokoh penting Pandawa.",
+    "bima": "Bima (Werkudara) adalah kesatria kuat, jujur, dan berwatak keras.",
+    "gatotkaca": "Gatotkaca adalah ksatria sakti mandraguna, mampu terbang, anak Bima.",
+    "nakula": "Nakula adalah salah satu Pandawa kembar, dikenal tampan dan ahli pedang.",
+    "sadewa": "Sadewa adalah saudara kembar Nakula, terkenal bijaksana.",
+    "werkudara": "Werkudara adalah nama lain Bima, simbol kekuatan dan keberanian.",
+    "yudistira": "Yudistira adalah pemimpin Pandawa yang adil dan jujur."
 }
 
-# ============================================
-#  HEADER HERO SECTION
-# ============================================
-st.markdown("""
-<div class="hero">
-    <div class="title">🔮 Klasifikasi Tokoh Wayang</div>
-    <div class="subtitle">Tema Gelap • Background Batik • Desain Elegan</div>
-</div>
-""", unsafe_allow_html=True)
+# =================================================================
+# UI – HEADER
+# =================================================================
+st.markdown("<h1>🎭 Klasifikasi Tokoh Wayang</h1>", unsafe_allow_html=True)
+st.markdown("<h3>Tema Gelap • Background Batik • Gradasi Elegan</h3>", unsafe_allow_html=True)
+st.write("")
 
-# ============================================
-#  UPLOAD GAMBAR
-# ============================================
-st.markdown("### 📤 Upload gambar tokoh wayang")
+# =================================================================
+# UPLOAD GAMBAR
+# =================================================================
+st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
+uploaded = st.file_uploader("📤 Upload gambar tokoh wayang", type=["jpg", "jpeg", "png"])
+st.markdown("</div>", unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("Unggah gambar", type=["jpg", "jpeg", "png"])
+col1, col2 = st.columns([1, 1.2])
 
-if uploaded_file:
-    img = Image.open(uploaded_file).convert("RGB")
+# =================================================================
+# PROSES GAMBAR
+# =================================================================
+if uploaded:
+    with col1:
+        img = Image.open(uploaded)
+        st.image(img, caption="Gambar yang diupload", use_container_width=True)
 
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("### 🖼 Gambar yang Diupload")
+    img = img.resize((224, 224))
+    img_array = tf.keras.preprocessing.image.img_to_array(img)
+    img_array = np.expand_dims(img_array / 255.0, axis=0)
 
-    st.image(img, use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    if st.button("🔮 Analisis Gambar", use_container_width=True):
+        prediction = model.predict(img_array)
+        idx = np.argmax(prediction)
+        tokoh = labels[idx]
+        confidence = prediction[0][idx] * 100
 
-    if st.button("🔍 Analisis Gambar"):
-        # PREPROSES
-        img_resized = img.resize((224, 224))
-        img_array = np.array(img_resized) / 255.0
-        img_array = np.expand_dims(img_array, 0)
+        with col2:
+            st.markdown("<div class='result-box'>", unsafe_allow_html=True)
+            st.subheader(f"✨ Hasil Prediksi: **{tokoh.upper()}**")
+            st.markdown(f"**Akurasi:** {confidence:.2f}%")
+            st.write("---")
+            st.write(f"📜 **Deskripsi Tokoh:**")
+            st.write(deskripsi.get(tokoh, "Deskripsi belum tersedia."))
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        predictions = model.predict(img_array)
-        class_id = np.argmax(predictions)
-        label = class_names[class_id]
+else:
+    st.info("Silakan upload gambar terlebih dahulu.")
 
-        # === HASIL ===
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.markdown(f"<div class='result-title'>✨ Hasil Prediksi: {label.title()}</div>", unsafe_allow_html=True)
-
-        # deskripsi tambahan
-        desc = wayang_info.get(label.lower(), "Deskripsi tidak tersedia.")
-        st.markdown(f"### 📜 Deskripsi Tokoh\n{desc}")
-
-        st.markdown("</div>", unsafe_allow_html=True)
