@@ -20,7 +20,7 @@ def load_base64(path):
     with open(path, "rb") as img:
         return base64.b64encode(img.read()).decode()
 
-batik_base64 = load_base64("batik.png")
+batik_base64 = load_base64("batik.png.png")
 
 # =================================================================
 # CUSTOM DARK THEME + BATIK BACKGROUND
