@@ -2,135 +2,154 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+import base64
+import requests
 
 # =====================================================================
-# CONFIG
+# PAGE CONFIG
 # =====================================================================
 st.set_page_config(
     page_title="Klasifikasi Tokoh Wayang",
     page_icon="🎭",
-    layout="centered"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# =====================================================================
-# SUPER CUSTOM CSS (BATIK + MODERN UI)
-# =====================================================================
-st.markdown("""
-<style>
-
-    /* ====== GLOBAL BACKGROUND ====== */
-    body {
-        background-color: #f5f3f0;
-    }
-
-    /* ====== HEADER BATIK ====== */
-    .hero {
-        width: 100%;
-        padding: 70px 20px;
-        background-image: url('https://i.ibb.co/syjmXbL/batik-header-purple.jpg');
-        background-size: cover;
-        background-position: center;
-        border-radius: 0px 0px 25px 25px;
-        position: relative;
-        text-align: center;
-        color: white;
-    }
-
-    .hero::before {
-        content: "";
-        position: absolute;
-        left:0; top:0; right:0; bottom:0;
-        background: rgba(0,0,0,0.55);
-        border-radius: 0px 0px 25px 25px;
-    }
-
-    .hero-title {
-        font-size: 3rem;
-        font-weight: 900;
-        z-index: 10;
-        position: relative;
-    }
-
-    .hero-sub {
-        font-size: 1.3rem;
-        font-weight: 300;
-        margin-top: -10px;
-        z-index: 10;
-        position: relative;
-    }
-
-    /* ====== UPLOAD BOX CUSTOM ====== */
-    .uploadbox {
-        background: white;
-        padding: 25px;
-        border-radius: 18px;
-        margin-top: 25px;
-        box-shadow: 0 3px 20px rgba(0,0,0,0.12);
-    }
-
-    /* ====== IMAGE FRAME (BATIK BORDER) ====== */
-    .img-frame {
-        padding: 12px;
-        border-radius: 15px;
-        background-image: url('https://i.ibb.co/dPBJz2m/batik-border.png');
-        background-size: 180px;
-    }
-
-    /* ====== RESULT CARD ====== */
-    .result-card {
-        margin-top: 30px;
-        background: white;
-        border-radius: 18px;
-        padding: 25px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-    }
-
-    .result-title {
-        font-size: 1.8rem;
-        color: #3B1E54;
-        font-weight: 800;
-        margin-bottom: 8px;
-    }
-
-    .confidence {
-        font-weight: 600;
-        color: #6A4FA3;
-    }
-
-    /* ====== BUTTON ====== */
-    .stButton>button {
-        background: linear-gradient(135deg, #4d2c7a, #8a4de8);
-        color: white;
-        border: none;
-        font-size: 1.1rem;
-        font-weight: 700;
-        padding: 12px 22px;
-        border-radius: 12px;
-    }
-    .stButton>button:hover {
-        background: linear-gradient(135deg, #341d54, #6b37b8);
-        color: white;
-    }
-
-</style>
-""", unsafe_allow_html=True)
 
 # =====================================================================
-# DESKRIPSI TOKOH
+# BACKGROUND BATIK (BASE64)
+# =====================================================================
+def set_background():
+    batik_file = "batik.jpg"
+    url_batik = "https://i.ibb.co/tH1G9sn/batik-purple.jpg"
+
+    r = requests.get(url_batik)
+    with open(batik_file, "wb") as f:
+        f.write(r.content)
+
+    with open(batik_file, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode()
+
+    css = f"""
+    <style>
+
+        body {{
+            background-image: url("data:image/jpg;base64,{encoded}");
+            background-size: cover;
+            background-attachment: fixed;
+        }}
+
+        .main {{
+            background: rgba(255,255,255,0.85);
+            padding: 25px;
+            border-radius: 15px;
+        }}
+
+        /* HERO HEADER */
+        .hero {{
+            background: rgba(0,0,0,0.55);
+            padding: 50px;
+            text-align: center;
+            border-radius: 15px;
+            color: white;
+            margin-bottom: 35px;
+        }}
+
+        .title {{
+            font-size: 3rem;
+            font-weight: 900;
+        }}
+
+        .subtitle {{
+            font-size: 1.3rem;
+            opacity: 0.9;
+        }}
+
+        /* CARDS */
+        .card {{
+            background: #ffffffee;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 18px rgba(0,0,0,0.15);
+        }}
+
+        /* IMAGE FRAME */
+        .img-frame {{
+            padding: 10px;
+            border: 5px solid #4B2E83;
+            border-radius: 15px;
+            background: white;
+        }}
+
+        /* RESULT TITLE */
+        .result-title {{
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #3B1E54;
+            animation: fadeIn 1s ease;
+        }}
+
+        /* ANIMATION */
+        @keyframes fadeIn {{
+            from {{ opacity: 0; transform: translateY(10px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+
+        /* MODAL POPUP */
+        .modal {{
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }}
+
+        .modal-content {{
+            background: white;
+            padding: 30px;
+            width: 60%;
+            border-radius: 15px;
+            animation: fadeIn 0.7s ease;
+        }}
+
+        .close-btn {{
+            background: #b80000;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 10px;
+            float: right;
+            border: none;
+        }}
+
+    </style>
+    """
+
+    st.markdown(css, unsafe_allow_html=True)
+
+
+set_background()
+
+
+# =====================================================================
+# WAYANG DESCRIPTIONS
 # =====================================================================
 deskripsi_wayang = {
-    "arjuna": "Arjuna adalah ksatria Pandawa yang paling tampan dan ahli memanah. Ia identik dengan ketenangan dan kebijaksanaan.",
-    "bagong": "Bagong adalah punakawan lucu dan spontan yang melambangkan suara rakyat dan kritik sosial.",
-    "bathara surya": "Dewa matahari pemberi terang dan kehidupan. Banyak tokoh memperoleh kesaktian darinya.",
-    "bathara wisnu": "Dewa pemelihara alam semesta, penuh welas asih dan penjaga keseimbangan dunia.",
-    "gareng": "Gareng adalah punakawan berhati baik, bijaksana, dan simbol kesederhanaan.",
-    "nakula": "Nakula adalah salah satu kembar Pandawa, penuh disiplin dan sangat ahli dalam berkuda.",
-    "petruk": "Petruk adalah punakawan tinggi jenaka yang sering mengkritik perilaku tokoh-tokoh lewat humor.",
-    "sadewa": "Sadewa adalah kembaran Nakula, memiliki kecerdasan dan spiritualitas yang tinggi.",
-    "semar": "Semar adalah punakawan tertua dan paling sakti. Ia sebenarnya dewa yang turun ke bumi untuk membimbing ksatria.",
-    "werkudara": "Werkudara (Bima) adalah Pandawa paling kuat, jujur, dan pemberani. Ia memiliki kuku sakti Pancanaka.",
-    "yudistira": "Yudistira adalah pemimpin Pandawa, simbol kejujuran dan kebijaksanaan sejati."
+    "arjuna": "Arjuna adalah ksatria Pandawa yang sangat tampan, ahli memanah, simbol kebijaksanaan.",
+    "bagong": "Bagong adalah punakawan spontan dan lucu, simbol kritik sosial.",
+    "bathara surya": "Dewa matahari pemberi cahaya dan kehidupan.",
+    "bathara wisnu": "Dewa pemelihara alam, penuh kasih dan menjaga keseimbangan dunia.",
+    "gareng": "Gareng adalah punakawan baik hati dan sederhana.",
+    "nakula": "Nakula adalah Pandawa yang tampan, disiplin, dan ahli berkuda.",
+    "petruk": "Petruk adalah punakawan humoris yang sering mengkritik tokoh-tokoh.",
+    "sadewa": "Sadewa adalah kembar Nakula yang cerdas dan spiritualis.",
+    "semar": "Semar adalah punakawan tertua, sakti, dan sesungguhnya dewa penyamar.",
+    "werkudara": "Werkudara (Bima) adalah Pandawa terkuat yang jujur dan pemberani.",
+    "yudistira": "Yudistira adalah pemimpin Pandawa, simbol kejujuran dan kebijaksanaan."
 }
+
 
 # =====================================================================
 # LOAD MODEL
@@ -140,51 +159,87 @@ class_names = list(deskripsi_wayang.keys())
 
 
 # =====================================================================
-# HEADER (HERO SECTION)
+# SIDEBAR MENU
 # =====================================================================
-st.markdown("""
-<div class="hero">
-    <div class="hero-title">🎭 Klasifikasi Tokoh Wayang</div>
-    <div class="hero-sub">Unggah gambar wayang & dapatkan identitas serta ceritanya</div>
-</div>
-""", unsafe_allow_html=True)
+menu = st.sidebar.radio("Navigasi", ["🏠 Halaman Utama", "📘 Tentang Wayang", "👤 Tentang Pembuat"])
 
 
 # =====================================================================
-# UPLOAD BOX
+# PAGE 1 — KLASIFIKASI
 # =====================================================================
-st.markdown("<div class='uploadbox'>", unsafe_allow_html=True)
-uploaded_file = st.file_uploader("📤 Upload Gambar Tokoh Wayang", type=["jpg", "jpeg", "png"])
-st.markdown("</div>", unsafe_allow_html=True)
+if menu == "🏠 Halaman Utama":
 
+    st.markdown("""
+    <div class="hero">
+        <div class="title">🎭 Klasifikasi Tokoh Wayang</div>
+        <div class="subtitle">Unggah gambar wayang & dapatkan identitas lengkap beserta sejarahnya</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# =====================================================================
-# PROCESS IMAGE
-# =====================================================================
-if uploaded_file:
+    col1, col2 = st.columns([1, 1])
 
-    image = Image.open(uploaded_file).convert("RGB")
+    with col1:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        uploaded_file = st.file_uploader("📤 Upload Gambar Tokoh", type=["jpg", "jpeg", "png"])
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='img-frame'>", unsafe_allow_html=True)
-    st.image(image, width=320)
-    st.markdown("</div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
 
-    img_resized = image.resize((224, 224))
-    img_array = np.expand_dims(np.array(img_resized) / 255.0, axis=0)
+        if uploaded_file:
+            image = Image.open(uploaded_file).convert("RGB")
 
-    if st.button("🔍 Analisis Gambar"):
-        with st.spinner("Menganalisis gambar..."):
-            pred = model.predict(img_array)
-            idx = np.argmax(pred)
-            label = class_names[idx]
-            confidence = pred[0][idx] * 100
+            st.markdown("<div class='img-frame'>", unsafe_allow_html=True)
+            st.image(image, width=300)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown("<div class='result-card'>", unsafe_allow_html=True)
+            img_resized = image.resize((224, 224))
+            img_array = np.expand_dims(np.array(img_resized) / 255.0, axis=0)
 
-        st.markdown(f"<div class='result-title'>✨ Tokoh: {label.upper()}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='confidence'>📊 Keyakinan Model: {confidence:.2f}%</div>", unsafe_allow_html=True)
-        st.write("---")
-        st.write("### 📝 Deskripsi Singkat:")
-        st.write(deskripsi_wayang[label])
+            if st.button("🔍 Analisis Gambar"):
+                pred = model.predict(img_array)[0]
+                top3_idx = np.argsort(pred)[-3:][::-1]
+
+                st.markdown("<div class='result-title'>✨ Hasil Prediksi</div>", unsafe_allow_html=True)
+
+                for idx in top3_idx:
+                    nama = class_names[idx].upper()
+                    conf = pred[idx] * 100
+                    st.write(f"**{nama}** — {conf:.2f}%")
+
+                st.write("---")
+
+                label_top = class_names[top3_idx[0]]
+                st.write("### 📝 Deskripsi Tokoh:")
+                st.write(deskripsi_wayang[label_top])
 
         st.markdown("</div>", unsafe_allow_html=True)
+
+
+# =====================================================================
+# PAGE 2 — TENTANG WAYANG (MODAL STYLE)
+# =====================================================================
+elif menu == "📘 Tentang Wayang":
+
+    st.markdown("""
+        <div class="card">
+            <h2>📘 Sejarah Singkat Wayang</h2>
+            Wayang adalah seni pertunjukan tradisional Indonesia yang menggabungkan seni peran, suara, musik gamelan,
+            sastra, lukisan, dan filsafat. Wayang telah diakui UNESCO sebagai Mahakarya Warisan Budaya Takbenda.
+            Tokoh-tokoh wayang memiliki karakter yang mencerminkan nilai kehidupan, moral, dan spiritual.
+        </div>
+    """, unsafe_allow_html=True)
+
+
+# =====================================================================
+# PAGE 3 — TENTANG PEMBUAT
+# =====================================================================
+elif menu == "👤 Tentang Pembuat":
+    st.markdown("""
+        <div class="card">
+            <h2>👤 Tentang Pembuat</h2>
+            <p>Aplikasi ini dibuat oleh <b>Mutiarasiva123</b> sebagai proyek Deep Learning: 
+            "Klasifikasi Tokoh Wayang Menggunakan CNN & Streamlit".</p>
+            <p>Aplikasi memanfaatkan MobileNetV2 untuk mengenali tokoh wayang secara akurat.</p>
+        </div>
+    """, unsafe_allow_html=True)
