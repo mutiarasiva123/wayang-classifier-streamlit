@@ -5,192 +5,135 @@ from PIL import Image
 import base64
 
 # ============================
-#   CONFIG PAGE
+# PAGE CONFIG
 # ============================
 st.set_page_config(
     page_title="Klasifikasi Tokoh Wayang",
     page_icon="🎭",
-    layout="centered"
+    layout="wide"
 )
 
 # ============================
-#   LOAD BACKGROUND IMAGE
+# FUNGSI BACKGROUND
 # ============================
-def set_background(image_file):
-    with open(image_file, "rb") as f:
+def set_background(image_path):
+    with open(image_path, "rb") as f:
         data = f.read()
     encoded = base64.b64encode(data).decode()
     st.markdown(
         f"""
         <style>
         body {{
-            background: linear-gradient(135deg, #1a1a1a, #2d0e37);
+            background-image: url("data:image/png;base64,{encoded}");
+            background-size: cover;
             background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-position: center;
         }}
         .main {{
-            background-image: url("data:image/png;base64,{encoded}");
-            background-size: 450px;
-            background-repeat: repeat;
-            background-blend-mode: soft-light;
+            background: rgba(0,0,0,0.55);
+            padding: 30px;
+            border-radius: 12px;
         }}
         </style>
         """,
         unsafe_allow_html=True
     )
 
-set_background("batik.png")  # file batik kamu
-
-
-# ============================
-#  CUSTOM CSS
-# ============================
-st.markdown("""
-<style>
-/* ================= HEADER ================= */
-.header-box {
-    text-align:center;
-    padding:20px 10px;
-}
-.title {
-    font-size:2.7rem;
-    font-weight:900;
-    color:#E8D5FF;
-    text-shadow:0 0 12px #5900b3;
-}
-.subtitle {
-    font-size:1.1rem;
-    color:#C9C9C9;
-    margin-top:-8px;
-}
-
-/* ================= UPLOADER ================= */
-.upload-section {
-    background-color:rgba(255,255,255,0.08);
-    padding:18px;
-    margin-top:20px;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,0.18);
-    backdrop-filter: blur(6px);
-}
-
-/* ================= BUTTON ================= */
-.stButton>button {
-    background: linear-gradient(135deg, #6f2dbd, #3b1e54);
-    color:white;
-    padding:10px 28px;
-    border-radius:9px;
-    border:none;
-    font-size:1.05rem;
-    font-weight:600;
-    letter-spacing:0.5px;
-    box-shadow:0 0 8px #4e1a7e;
-}
-.stButton>button:hover {
-    background: linear-gradient(135deg, #531b8f, #2a1440);
-    box-shadow:0 0 12px #b37bff;
-}
-
-/* ================= IMAGE PREVIEW ================= */
-.preview-img {
-    text-align:center;
-    margin-top:20px;
-}
-
-/* ================= RESULT CARD ================= */
-.result-card {
-    margin-top:25px;
-    padding:22px;
-    border-radius:14px;
-    background-color:rgba(255,255,255,0.08);
-    border-left:6px solid #b37bff;
-    backdrop-filter: blur(6px);
-    color:#F0E9FF;
-}
-
-/* ================= FOOTER ================= */
-.footer {
-    margin-top:55px;
-    text-align:center;
-    color:#bfbfbf;
-    font-size:0.9rem;
-}
-</style>
-""", unsafe_allow_html=True)
-
+# PASANG BACKGROUND
+set_background("batik.png")
 
 # ============================
-#   DESKRIPSI WAYANG
+# DESKRIPSI TOKOH WAYANG
 # ============================
 deskripsi_wayang = {
-    "arjuna": "Arjuna merupakan ksatria Pandawa yang tersohor karena ketampanan, kebijaksanaan, serta kemahirannya dalam ilmu memanah.",
-    "bagong": "Bagong adalah punakawan yang cerdas dan humoris. Ia sering menyampaikan kritik sosial melalui candaan.",
-    "bathara surya": "Bathara Surya adalah dewa matahari yang menjadi simbol kehidupan, cahaya, dan keadilan dalam mitologi Jawa.",
-    "bathara wisnu": "Bathara Wisnu merupakan dewa pemelihara yang menjaga keseimbangan alam dan menjadi pelindung dunia.",
-    "gareng": "Gareng adalah punakawan berhati bijak, meskipun bentuk tubuhnya unik. Ia kerap memberi nasihat dengan sentuhan humor.",
-    "nakula": "Nakula adalah saudara kembar Sadewa, terkenal setia, disiplin, serta mahir dalam berkuda.",
-    "petruk": "Petruk merupakan punakawan berpostur tinggi yang jenaka dan bijaksana. Ia sering menjadi simbol suara kebenaran rakyat kecil.",
-    "sadewa": "Sadewa adalah kembar Nakula, terkenal berwatak lembut, cerdas, dan memiliki kemampuan spiritual tinggi.",
-    "semar": "Semar adalah punakawan tertua sekaligus paling sakti. Ia melambangkan kebijaksanaan dan penjaga kaum lemah.",
-    "werkudara": "Werkudara atau Bima adalah Pandawa yang kuat, jujur, serta memiliki kuku sakti Pancanaka.",
-    "yudistira": "Yudistira merupakan Pandawa sulung yang dikenal akan kejujuran, kesabaran, dan kebijaksanaannya."
+    "arjuna": "Arjuna merupakan ksatria Pandawa yang terkenal dengan ketampanan, kebijaksanaan, serta keterampilannya dalam memanah.",
+    "bagong": "Bagong adalah punakawan berkarakter jenaka dan kritis. Ia sering menyampaikan pesan moral melalui humor.",
+    "bathara surya": "Bathara Surya adalah dewa matahari yang melambangkan sumber kehidupan dan keadilan.",
+    "bathara wisnu": "Bathara Wisnu adalah dewa pemelihara yang menjaga keseimbangan dunia.",
+    "gareng": "Gareng adalah punakawan yang bijak, berperilaku hati-hati, dan sering mengajarkan nilai moral.",
+    "nakula": "Nakula adalah salah satu kembar Pandawa yang terkenal disiplin, setia, dan ahli berkuda.",
+    "petruk": "Petruk adalah punakawan berpostur tinggi dengan sifat humoris dan cerdas.",
+    "sadewa": "Sadewa merupakan saudara kembar Nakula yang bijaksana serta memiliki kemampuan spiritual tinggi.",
+    "semar": "Semar adalah punakawan tertua dan paling dihormati. Ia melambangkan kebijaksanaan dan kerendahan hati.",
+    "werkudara": "Werkudara (Bima) merupakan Pandawa terkuat, berwatak tegas dan jujur.",
+    "yudistira": "Yudistira adalah Pandawa sulung yang terkenal karena kejujurannya dan ketenangannya."
 }
 
 # ============================
-#   LOAD MODEL
+# LOAD MODEL
 # ============================
 model = tf.keras.models.load_model("wayang_mobilenetv2.h5")
 class_names = list(deskripsi_wayang.keys())
 
-
 # ============================
-#   HEADER
+# HEADER
 # ============================
 st.markdown("""
-<div class='header-box'>
-    <div class='title'>🎭 Klasifikasi Tokoh Wayang</div>
-    <div class='subtitle'>Unggah gambar tokoh wayang untuk memperoleh hasil identifikasi dan penjelasan lengkap</div>
-</div>
+    <h1 style="
+        color:#E8D5FF;
+        font-weight:900;
+        text-shadow:0px 0px 6px #c084fc;
+        margin-bottom:0;
+    ">🎭 Klasifikasi Tokoh Wayang</h1>
+    <p style="color:#f0e9ff; margin-top:-8px;">
+        Unggah gambar tokoh wayang untuk memperoleh hasil identifikasi dan penjelasan lengkap.
+    </p>
 """, unsafe_allow_html=True)
 
+st.write("")  # spasi
 
 # ============================
-#   UPLOAD IMAGE
+# LAYOUT LANDSCAPE
 # ============================
-st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
-uploaded_file = st.file_uploader("Unggah gambar tokoh wayang", type=["jpg", "jpeg", "png"])
-st.markdown("</div>", unsafe_allow_html=True)
+col1, col2 = st.columns([1, 1.2])
 
-if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")
+with col1:
+    st.markdown("<h4 style='color:#fff;'>Unggah Gambar</h4>", unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
 
-    # PREVIEW GAMBAR KECIL & RAPI
-    st.markdown("<div class='preview-img'>", unsafe_allow_html=True)
-    st.image(image, caption="Pratinjau Gambar", width=240)
-    st.markdown("</div>", unsafe_allow_html=True)
+    if uploaded_file:
+        image = Image.open(uploaded_file).convert("RGB")
 
-    img = image.resize((224, 224))
-    img_array = np.array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+        # Tampilkan preview kecil
+        st.image(image, caption="Gambar terunggah", width=220)
 
-    if st.button("🔍 Analisis Gambar"):
-        with st.spinner("Sedang memproses..."):
+        img_resized = image.resize((224, 224))
+        img_array = np.array(img_resized) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
+
+        predict_btn = st.button("🔍 Analisis Gambar")
+
+with col2:
+    if uploaded_file and predict_btn:
+        with st.spinner("Sedang memproses gambar..."):
             predictions = model.predict(img_array)
             idx = np.argmax(predictions)
             result = class_names[idx]
             confidence = predictions[0][idx] * 100
 
-        # ============================
-        #   SHOW RESULT CARD
-        # ============================
-        st.markdown("<div class='result-card'>", unsafe_allow_html=True)
-        st.write(f"### 🎯 Tokoh: **{result.upper()}**")
-        st.write(f"📊 Tingkat Kepercayaan: **{confidence:.2f}%**")
-        st.write("---")
-        st.write("### 📝 Deskripsi Tokoh")
-        st.write(deskripsi_wayang[result])
+        # Kartu hasil
+        st.markdown("""
+            <div style="
+                background: rgba(255,255,255,0.15);
+                padding:20px;
+                border-radius:12px;
+                backdrop-filter: blur(8px);
+                color:white;
+            ">
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"## 🎯 Tokoh: **{result.upper()}**")
+        st.markdown(f"### 📊 Tingkat Kepercayaan: **{confidence:.2f}%**")
+        st.markdown("---")
+        st.markdown("### 📝 Deskripsi Tokoh:")
+        st.markdown(f"<p style='font-size:16px;'>{deskripsi_wayang[result]}</p>", unsafe_allow_html=True)
+
         st.markdown("</div>", unsafe_allow_html=True)
 
-# ============================
-#   FOOTER
-# ============================
-st.markdown("<div class='footer'>Dibuat dengan ❤️ menggunakan Streamlit & MobileNetV2</div>", unsafe_allow_html=True)
+# FOOTER
+st.markdown("""
+    <p style='text-align:center; color:#eee; margin-top:40px;'>
+        Dibangun dengan Streamlit & MobileNetV2 • © 2025
+    </p>
+""", unsafe_allow_html=True)
